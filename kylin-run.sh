@@ -13,16 +13,14 @@ app_name=$1
 function unionfs
 {
         echo  "unionfs  $app_path/$app_name/unionfs/$1"
-        sudo mount -t aufs -o  dirs=$app_path/$app_name/$1=rw:/$1=ro none $app_path/$app_name/unionfs/$1
+        sudo mount -t aufs -o  dirs=$app_path/$app_name/$1=rw:/$1=ro none $app_path/$app_name/unionfs/$1   #mount需要root权限， 但是不能在脚本执行时写sudo,那样会使沙盒变成root用户
 }
 
 
 unionfs "etc"
 unionfs "var"
-unionfs "usr"
+unionfs "usr"    #运行时再次挂载，因为 unionfs 挂载 会在重启计算机后消失
 
-
-#    --bind /home /home  --bind $app_path/$1/unionfs/etc /etc  --bind $app_path/$1/unionfs/var /var    --bind $app_path/$1/unionfs/usr /usr \
 
 (
     exec bwrap \
@@ -44,7 +42,8 @@ unionfs "usr"
     12< <(getent group $(id -g) 65534)  \
     10<<EOF
 [Application]
-name=org.videolan.VLC
-runtime=runtime/org.kde.Platform/x86_64/5.14
+name=任意胖deb
+runtime=host
 EOF
-    #--unshare-pid \
+
+#    /bin/sh  改为 $1    可直接执行程序      #此处有漏洞，无法获知未知应用可执行命令的具体名字， 
